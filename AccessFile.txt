@@ -1,0 +1,32 @@
+
+
+PKD("Tim", "TimKey") :- ;
+PKD("Sally", "SallyKey") :- ;
+PKD("Eric", "EricKey") :- ;
+PKD("Colette", "ColetteKey") :- ;
+PKD("Sam", "SamKey") :- ;
+PKD("Dave", "DaveKey") :- ;
+PKD("Susan", "SusanKey") :- ;
+
+
+Group("Boys", "Tim") :- ;
+Group("Boys", "Eric") :- ;
+Group("Boys", "Dave") :- ;
+
+Group("Girls", "Sally") :- ;
+Group("Girls", "Colette") :- ;
+Group("Girls", "Sam") :- ;
+Group("Girls", "Susan") :- ;
+
+Group("S-names", Sally) :- ;
+Group("S-names", Sam) :- ;
+Group("S-names", Susan) :- ;
+
+SubGroup("Girls", "S-names") :- ;
+
+Perms("Tim", "file some/bull/shit", "read") :- ;
+Perms("Tim", "file some/bull/shit", "write") :- ;
+Perms("Eric", "file some/bull/shit", "read") :- ;
+
+Perms(user, "file girl/file", "read") :- Group("Girls", user);
+Perms(user, "file sname/file", "read") :- Group("S-names", user);
