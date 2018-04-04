@@ -36,7 +36,7 @@ class Node<T extends AccessObject>{
       public void addChild(Node<? extends AccessObject> newChild, Edge edge){
         if(!childNodes.contains(newChild)){
           this.childNodes.add(newChild);
-        }  
+        }
         addEdge(edge);
       }
 
@@ -49,6 +49,7 @@ class Node<T extends AccessObject>{
             edges.add(edge);
           }
       }
+
       public ArrayList<Edge> getEdgesOfNode(Node<? extends AccessObject> otherEnd){
         ArrayList<Edge> returnData = new ArrayList<Edge>();
         for(int i = 0; i < edges.size(); i++){
@@ -64,5 +65,19 @@ class Node<T extends AccessObject>{
           }
         }
         return returnData;
+      }
+
+      @Override
+      public boolean equals(Object obj){
+        if(obj == null) return false;
+        try{
+          final Node<? extends AccessObject> other = (Node<? extends AccessObject>) obj;
+          if((this.data.getName() == null) ? (other.getData().getName()== null) : !this.data.getName().equals(other.getData().getName())){
+            return false;
+          }
+          return true;
+        } catch(Exception e){
+          return false;
+        }
       }
 }

@@ -10,4 +10,6 @@ abstract class AccessObject{
     return this.getClass();
   }
 
+  abstract public void print();
+
 }

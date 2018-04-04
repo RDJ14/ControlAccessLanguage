@@ -116,7 +116,7 @@ public class AccessControl{
         String fileName = argSplit[1];
         String permissionString = argSplit[2];
         if(splitRightHand.length == 0){
-          Permission permission;
+          Permission permission = null;
           if(permissionString.charAt(0) == '"'){
             permissionString = permissionString.substring(1, permissionString.length() - 1);
             try{
@@ -150,8 +150,12 @@ public class AccessControl{
           }
           File file;
           if(fileIndex == -1){
-            
+            file = new File(fileName);
+            _files.add(file);
+          } else{
+            file = _files.get(fileIndex);
           }
+          file.addUserAccess(userToAdd, permission);
         } else{
 
         }
@@ -182,6 +186,10 @@ public class AccessControl{
     for(int i = 0; i < _groups.size(); i++){
       _groups.get(i).print();
     }
+    for(int i = 0; i < _files.size(); i++){
+      _files.get(i).print();
+    }
+
 
   }
 

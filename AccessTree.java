@@ -59,9 +59,20 @@ class AccessTree<T>{
     }
 
     public void addUserChild(User user, Permission permission){
-      Node<User> newNode = new Node<User>(user);
+      Node<User> newNode = null;
+      boolean existingNode = false;
+      for(int i = 0; i < root.getChildren().size(); i++){
+        if(root.getChildren().get(i).getData().equals(user)){
+          newNode = (Node<User>) root.getChildren().get(i);
+          existingNode = true;
+        }
+      }
+      if(!existingNode){
+        newNode = new Node<User>(user);
+      }
       Edge newEdge = new Edge(root, newNode, permission);
       root.addChild(newNode, newEdge);
+      newNode.addEdge(newEdge);
     }
 
     public void print(){

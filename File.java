@@ -42,4 +42,17 @@ class File extends AccessObject{
     }
     return true;
   }
+
+  public void print(){
+    System.out.println(fileName + ": ");
+    System.out.println("  Users and access:");
+    ArrayList<Node<? extends AccessObject>> accessNodes = accessTree.getRoot().getChildren();
+    for(int i = 0; i < accessNodes.size(); i++){
+      System.out.println("    User or Group: " +accessNodes.get(i).getData().getName() + " has permission(s): ");
+      ArrayList<Edge> edges = accessNodes.get(i).getEdges();
+      for(int j = 0; j < edges.size(); j++){
+        System.out.println("      " + edges.get(j).getPermission());
+      }
+    }
+  }
 }
