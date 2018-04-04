@@ -1,5 +1,3 @@
-
-
 PKD("Tim", "TimKey") :- ;
 PKD("Sally", "SallyKey") :- ;
 PKD("Eric", "EricKey") :- ;
@@ -18,15 +16,17 @@ Group("Girls", "Colette") :- ;
 Group("Girls", "Sam") :- ;
 Group("Girls", "Susan") :- ;
 
-Group("S-names", Sally) :- ;
-Group("S-names", Sam) :- ;
-Group("S-names", Susan) :- ;
+Group("S-names", "Sally") :- ;
+Group("S-names", "Sam") :- ;
+Group("S-names", "Susan") :- ;
 
 SubGroup("Girls", "S-names") :- ;
 
-Perms("Tim", "file some/bull/shit", "read") :- ;
-Perms("Tim", "file some/bull/shit", "write") :- ;
-Perms("Eric", "file some/bull/shit", "read") :- ;
+Perms(user, resource, op) :- PKD("Dave", key), key$Perms(user, resource, op);
 
-Perms(user, "file girl/file", "read") :- Group("Girls", user);
-Perms(user, "file sname/file", "read") :- Group("S-names", user);
+Perms("Tim", "some/bull/shit", "read") :- ;
+Perms("Tim", "some/bull/shit", "write") :- ;
+Perms("Eric", "some/bull/shit", "read") :- ;
+
+Perms(user, "girl/file", "read") :- Group("Girls", user);
+Perms(user, "sname/file", "read") :- Group("S-names", user);

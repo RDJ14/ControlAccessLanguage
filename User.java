@@ -57,4 +57,8 @@ class User extends AccessObject{
     return true;
   }
 
+  public void print(){
+    System.out.println("Username: " +username + " " + "Key: " +key);
+  }
+
 }

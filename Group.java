@@ -14,6 +14,7 @@ class Group extends AccessObject{
       parentGroups = new ArrayList<Group>();
       childGroups = new ArrayList<Group>();
       accessTree = new AccessTree<Group>(this);
+      users = new ArrayList<User>();
     }
 
     public String getName(){
@@ -61,6 +62,23 @@ class Group extends AccessObject{
         return false;
       }
       return true;
+    }
+
+    public void print(){
+      System.out.println(groupName + ": ");
+      System.out.println("  Users: ");
+      for(int i = 0; i < users.size(); i++){
+        System.out.print("    ");
+        users.get(i).print();
+      }
+      System.out.println("  Parent Groups: ");
+      for (int i = 0; i < parentGroups.size(); i++) {
+        System.out.println(parentGroups.get(i).getName());
+      }
+      System.out.println("  Child Groups: ");
+      for (int i = 0; i < childGroups.size(); i++) {
+        System.out.println(childGroups.get(i).getName());
+      }
     }
 
 }
