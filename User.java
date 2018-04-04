@@ -22,6 +22,10 @@ class User extends AccessObject{
     return this.key;
   }
 
+  public boolean hasFileAccess(File file, Permission permission){
+    return accessTree.hasFileAccess(file, permission);
+  }
+
   public ArrayList<Group> getGroups(){
     return this.groups;
   }

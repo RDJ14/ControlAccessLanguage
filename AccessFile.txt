@@ -22,11 +22,12 @@ Group("S-names", "Susan") :- ;
 
 SubGroup("Girls", "S-names") :- ;
 
-Perms(user, resource, op) :- PKD("Dave", key), key$Perms(user, resource, op);
 
 Perms("Tim", "some/bull/shit", "read") :- ;
 Perms("Tim", "some/bull/shit", "write") :- ;
 Perms("Eric", "some/bull/shit", "read") :- ;
+Perms("Colette", "colette/file", "write") :- ;
 
+Perms("Sally", "colette/file", "read") :- PKD("Colette", "ColetteKey"), "Colette"$Perms(user, "colette/file", "write");
 Perms(user, "girl/file", "read") :- Group("Girls", user);
 Perms(user, "sname/file", "read") :- Group("S-names", user);

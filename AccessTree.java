@@ -98,6 +98,23 @@ class AccessTree<T>{
       newNode.addEdge(newEdge);
     }
 
+    public boolean hasFileAccess(File file, Permission permission){
+      ArrayList<Node<? extends AccessObject>> accessNodes = root.getChildren();
+      for(int i = 0; i < accessNodes.size(); i++){
+        Node<? extends AccessObject> node = accessNodes.get(i);
+        if(node.getData().equals(file)){
+          ArrayList<Edge> edges = node.getEdges();
+          for(int j = 0; j < edges.size(); j++){
+            Edge edge = edges.get(j);
+            if(edge.getPermission() == permission){
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
 
     public void print(){
       System.out.println();
