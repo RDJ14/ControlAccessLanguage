@@ -26,19 +26,29 @@ class Group extends AccessObject{
     }
 
     public void addChildGroup(Group group){
-      childGroups.add(group);
+      if(!childGroups.contains(group)){
+        childGroups.add(group);
+      }
+
+    }
+
+    public void addParentGroup(Group group){
+      parentGroups.add(group);
+      ArrayList<Node<? extends AccessObject>> accessNodes = accessTree.getRoot().getChildren();
+      for(int i = 0; i < accessNodes.size(); i++){
+        accessTree.addFileChild(accessNodes.get(i));
+      }
     }
 
     public void addUser(User user){
       users.add(user);
     }
 
-    public void setAsChildGroup(Group group){
-      parentGroups.add(group);
-    }
-
-    public void addFilePermission(File file, Permission permission){
+    public void addFileAccess(File file, Permission permission){
       accessTree.addFileChild(file, permission);
+      for(int i = 0; i < parentGroups.size(); i++){
+        parentGroups.get(i).getAccessTree().addFileChild(file, permission);
+      }
     }
 
     public AccessTree<Group> getAccessTree(){
@@ -51,6 +61,10 @@ class Group extends AccessObject{
 
     public ArrayList<Group> getChildrenGroups(){
       return this.childGroups;
+    }
+
+    public ArrayList<Group> getParentGroups(){
+      return this.parentGroups;
     }
     @Override
     public boolean equals(Object obj){
@@ -73,12 +87,22 @@ class Group extends AccessObject{
       }
       System.out.println("  Parent Groups: ");
       for (int i = 0; i < parentGroups.size(); i++) {
-        System.out.println(parentGroups.get(i).getName());
+        System.out.println("    " + parentGroups.get(i).getName());
       }
       System.out.println("  Child Groups: ");
       for (int i = 0; i < childGroups.size(); i++) {
-        System.out.println(childGroups.get(i).getName());
+        System.out.println("    " + childGroups.get(i).getName());
       }
+      System.out.println("  File Access: ");
+      ArrayList<Node<? extends AccessObject>> accessNodes = accessTree.getRoot().getChildren();
+      for(int i = 0; i < accessNodes.size(); i++){
+        System.out.println("    " +accessNodes.get(i).getData().getName() + " :");
+        ArrayList<Edge> edges = accessNodes.get(i).getEdges();
+        for(int j = 0; j < edges.size(); j++){
+          System.out.println("      " + edges.get(j).getPermission());
+        }
+      }
+
     }
 
 }

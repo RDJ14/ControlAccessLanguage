@@ -22,11 +22,31 @@ class AccessTree<T>{
       return this.root.getChildren();
     }
 
-    public void addFileChild(File file, Permission permission){
-        Node<File> fileNode = new Node<File>(file);
-        Edge edge = new Edge(root, fileNode, permission);
+    public void addFileChild(Node<? extends AccessObject> addNode){
+      File file = (File) addNode.getData();
+      ArrayList<Edge> edges = addNode.getEdges();
+      for(int i = 0; i < edges.size(); i++){
+        Permission permission = edges.get(i).getPermission();
+        addFileChild(file, permission);
+      }
+    }
 
+    public void addFileChild(File file, Permission permission){
+        Node<File> fileNode = null;
+        boolean existingNode = false;
+        for(int i = 0; i < root.getChildren().size(); i++){
+          if(root.getChildren().get(i).getData().equals(file)){
+            fileNode = (Node<File>) root.getChildren().get(i);
+            existingNode = true;
+          }
+        }
+        if(!existingNode){
+          fileNode = new Node<File>(file);
+        }
+
+        Edge edge = new Edge(root, fileNode, permission);
         root.addChild(fileNode, edge);
+        fileNode.addEdge(edge);
     }
 
     /*
@@ -34,29 +54,32 @@ class AccessTree<T>{
     */
     public void addGroupChild(Group group, Permission permission){
         //All files of the group
-        ArrayList<Node<? extends AccessObject>> groupChildren = group.getAccessTree().getChildren();
-        for(int i = 0; i < groupChildren.size(); i++){
-          Node<? extends AccessObject> tempNode = groupChildren.get(i);
-          addGroupHelper(tempNode, group, permission);
+        Node<Group> groupNode = null;
+        boolean existingNode = false;
+        for(int i = 0; i < root.getChildren().size(); i++){
+          if(root.getChildren().get(i).getData().equals(group)){
+            groupNode = (Node<Group>) root.getChildren().get(i);
+            existingNode = true;
+          }
         }
-    }
-
-    private void addGroupHelper(Node<? extends AccessObject> childNode, Group group, Permission permission){
-        //if the root already contains the object we dont want to add another node.
-        //instead we just need to add a new edge if the permission doesnt already exist for that file
-        Node<Group> groupNode = new Node<Group>(group);
+        if(!existingNode){
+          groupNode = new Node<Group>(group);
+        }
         Edge newEdge = new Edge(this.root, groupNode, permission);
-        root.addChild(childNode, newEdge);
-        newEdge.print();
-
-        ArrayList<Group> childGroups = group.getChildrenGroups();
-        while(childGroups.size() > 0){
-          Group aChildGroup = childGroups.get(0);
-          childGroups.remove(0);
-          addGroupHelper(childNode, aChildGroup, permission);
+        root.addChild(groupNode, newEdge);
+        groupNode.addEdge(newEdge);
+        ArrayList<Group> parentGroups = group.getParentGroups();
+        ArrayList<Group> parentCopy = new ArrayList<Group>();
+        for(int i = 0; i < parentGroups.size(); i++){
+          parentCopy.add(parentGroups.get(i));
         }
-
+        while(parentCopy.size() > 0){
+          Group aParentGroup = parentCopy.get(0);
+          parentCopy.remove(0);
+          addGroupChild(aParentGroup, permission);
+        }
     }
+
 
     public void addUserChild(User user, Permission permission){
       Node<User> newNode = null;
@@ -74,6 +97,7 @@ class AccessTree<T>{
       root.addChild(newNode, newEdge);
       newNode.addEdge(newEdge);
     }
+
 
     public void print(){
       System.out.println();
