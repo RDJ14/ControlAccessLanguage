@@ -8,7 +8,18 @@ enum Permission{
   write,
   execute
 }
-
+enum QueryError{
+  invalidStart,
+  canKeyWord,
+  whatKeyWord,
+  isKeyWords,
+  variableNotQuoted,
+  noUser,
+  noFile,
+  noGroup,
+  noPermission,
+  invalidForm
+}
 public class AccessControl{
   static ArrayList<File> _files            = new ArrayList<File>();
   static ArrayList<User> _users            = new ArrayList<User>();
@@ -39,11 +50,44 @@ public class AccessControl{
     System.exit(1);
   }
 
+  public static Permission getPermission(String permissionName){
+    Permission permission = null;
+    try{
+      return Permission.valueOf(permissionName);
+    } catch(Exception e){
+      return null;
+    }
+  }
+
   public static File getFile(String fileName){
     File file = null;
+    fileName = fileName.toUpperCase();
     for(int i = 0; i < _files.size(); i++){
-      if(_files.get(i).getName().equals(fileName)){
+      String other = _files.get(i).getName().toUpperCase();
+      if(other.equals(fileName)){
         return _files.get(i);
+      }
+    }
+    return null;
+  }
+
+  public static User getUser(String userName){
+    User user = null;
+    userName = userName.toUpperCase();
+    for(int i = 0; i < _users.size(); i++){
+      String name = _users.get(i).getName().toUpperCase();
+      if(name.equals(userName)){
+        return _users.get(i);
+      }
+    }
+    return null;
+  }
+
+  public static Group getGroup(String groupName){
+    Group group = null;
+    for(int i = 0; i < _groups.size(); i++){
+      if(_groups.get(i).getName().toUpperCase().equals(groupName.toUpperCase())){
+        return _groups.get(i);
       }
     }
     return null;
@@ -90,7 +134,11 @@ public class AccessControl{
         if(argSplit.length != 2){
           argumentError(line, "PKD", 2, argSplit.length);
         }
-        User newUser = new User(argSplit[0].replaceAll("\\s+",""), argSplit[1].replaceAll("\\s+",""));
+        String userName = argSplit[0].replaceAll("\\s+","");
+        String key = argSplit[1].replaceAll("\\s+","");
+        if(userName.charAt(0) == '\"') userName = userName.substring(1, userName.length());
+        if(userName.charAt(userName.length() - 1) == '\"') userName = userName.substring(0, userName.length() - 1);
+        User newUser = new User(userName, key);
         _users.add(newUser);
       } else if(splitRightHand.length == 1){
         String[] splitDollar = splitRightHand[0].split("$");
@@ -134,6 +182,12 @@ public class AccessControl{
         }
         String groupName = argSplit[0].replaceAll("\\s+","");
         String userName = argSplit[1].replaceAll("\\s+","");
+        if(groupName.charAt(0) == '\"') groupName = groupName.substring(1, groupName.length());
+        if(groupName.charAt(groupName.length() - 1) == '\"') groupName = groupName.substring(0, groupName.length() - 1);
+
+        if(userName.charAt(0) == '\"') userName = userName.substring(1, userName.length());
+        if(userName.charAt(userName.length() - 1) == '\"') userName = userName.substring(0, userName.length() - 1);
+
         Group group;
         int index = -1;
         for(int i = 0; i < _groups.size(); i++){
@@ -171,6 +225,9 @@ public class AccessControl{
         }
         String userName = argSplit[0];
         String fileName = argSplit[1];
+        if(userName.charAt(0) == '\"') userName = userName.substring(1, userName.length());
+        if(userName.charAt(userName.length() - 1) == '\"') userName = userName.substring(0, userName.length() - 1);
+
         String permissionString = argSplit[2];
         if(splitRightHand.length == 0){
           Permission permission = null;
@@ -242,6 +299,9 @@ public class AccessControl{
               }
               String groupName = rArgSplit[0];
               String iterator = rArgSplit[1];
+              if(groupName.charAt(0) == '\"') groupName = groupName.substring(1, groupName.length());
+              if(groupName.charAt(groupName.length() - 1) == '\"') groupName = groupName.substring(0, groupName.length() - 1);
+
               iterator = iterator.substring(0, iterator.length() - 2);
               if(!iterator.equals(userName)){
                 System.out.println("Error: " +line);
@@ -303,10 +363,13 @@ public class AccessControl{
             }
             else if(rType.equals("PKD")){
               String[] rArgSplit = rArguments.split(",");
+              String userToTrust = rArgSplit[0];
+              if(userToTrust.charAt(0) == '\"') userToTrust = userToTrust.substring(1, userToTrust.length());
+              if(userToTrust.charAt(userToTrust.length() - 1) == '\"') userToTrust = userToTrust.substring(0, userToTrust.length() - 1);
               String userKey  = rArgSplit[1];
               boolean foundUser = false;
               for(int i = 0; i < _users.size(); i++){
-                if(userName.equals(_users.get(i).getName())){
+                if(userToTrust.equals(_users.get(i).getName())){
                   _trustedPermUsers.add(_users.get(i));
                   foundUser = true;
                   break;
@@ -314,7 +377,7 @@ public class AccessControl{
               }
               if(!foundUser){
                 System.out.println("Error: " +line);
-                System.out.println("No user of the name: " +userName);
+                System.out.println("No user of the name: " +userToTrust);
                 System.exit(1);
               }
             }
@@ -338,7 +401,6 @@ public class AccessControl{
             String[] argSplitFirst = rArguments1.split(",");
             String[] argSplitSecond = rArguments2.split(",");
 
-            System.out.println(rArguments1);
             if(argSplitFirst.length != 2){
               argumentError(line, "PKD", 2, argSplitFirst.length);
             }
@@ -350,6 +412,10 @@ public class AccessControl{
             //        String permissionString = argSplit[2];
             String trustedUsername       = argSplitFirst[0];
             String trustedKey            = argSplitFirst[1];
+            if(trustedUsername.charAt(0) == '\"') trustedUsername = trustedUsername.substring(1, trustedUsername.length());
+            if(trustedUsername.charAt(trustedUsername.length() - 1) == '\"') trustedUsername = trustedUsername.substring(0, trustedUsername.length() - 1);
+
+
             User trustedUser = null;
             User userToAdd = null;
             for(int i = 0; i < _users.size(); i++){
@@ -430,6 +496,12 @@ public class AccessControl{
      }
      String parentGroupName = argSplit[0].replaceAll("\\s+","");
      String childGroupName = argSplit[1].replaceAll("\\s+","");
+     if(parentGroupName.charAt(0) == '\"') parentGroupName = parentGroupName.substring(1, parentGroupName.length());
+     if(parentGroupName.charAt(parentGroupName.length() - 1) == '\"') parentGroupName = parentGroupName.substring(0, parentGroupName.length() - 1);
+
+     if(childGroupName.charAt(0) == '\"') childGroupName = childGroupName.substring(1, childGroupName.length());
+     if(childGroupName.charAt(childGroupName.length() - 1) == '\"') childGroupName = childGroupName.substring(0, childGroupName.length() - 1);
+
      Group parentGroup;
      Group childGroup;
 
@@ -466,7 +538,350 @@ public class AccessControl{
      childGroup.addParentGroup(parentGroup);
 
     }
+  }
 
+  public static void proccessQuery(String query){
+    char firstChar = query.charAt(0);
+    switch(firstChar){
+      case 'c':
+        String queryWord = query.substring(0, 3);
+        if(!queryWord.equals("can")) {
+          queryError(QueryError.invalidStart, query);
+          return;
+        }
+        processCanQuery(query);
+        break;
+      case 'w':
+        queryWord = query.substring(0, 4);
+        if(!queryWord.equals("what")) {
+          queryError(QueryError.invalidStart, query);
+          return;
+        }
+        processWhatQuery(query);
+        break;
+      default:
+        queryError(QueryError.invalidStart, query);
+        return;
+    }
+  }
+
+  public static void processCanQuery(String query){
+    // get rid of CAN and whitespace
+    String fullQuery = query;
+    query = query.substring(4, query.length());
+    char typeChar = query.charAt(0);
+    if(typeChar == 'u'){
+      String keyWord = query.substring(0, 4);
+      if(keyWord.equals("user")){
+        query = query.substring(5, query.length());
+        if(query.charAt(0) != '\''){
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+
+        String[] splitQuery = query.split("\'");
+        if(splitQuery.length != 7){
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+        String userName = splitQuery[1];
+        String fileName = splitQuery[3];
+        String permissionString = splitQuery[5];
+        fileName = "\"" + fileName + "\"";
+
+
+        User user = getUser(userName);
+        if(user == null){
+          queryError(QueryError.noUser, fullQuery);
+          return;
+        }
+        File file = getFile(fileName);
+        if(file == null){
+          queryError(QueryError.noFile, fullQuery);
+          return;
+        }
+        Permission permission;
+        try{
+          permission = Permission.valueOf(permissionString);
+        } catch(Exception e){
+          queryError(QueryError.noPermission, fullQuery);
+          return;
+        }
+        boolean hasAccess = user.hasFileAccess(file, permission);
+        if(hasAccess){
+          System.out.println(">> Yes");
+          System.out.println();
+        }
+        else{
+          System.out.println(">> No");
+          System.out.println();
+        }
+      } else {
+        queryError(QueryError.canKeyWord, fullQuery);
+        return;
+      }
+    }
+    else if(typeChar == 'g'){
+      String keyWord = query.substring(0, 5);
+      if(keyWord.equals("group")){
+        query = query.substring(6, query.length());
+        if(query.charAt(0) != '\''){
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+      } else{
+        queryError(QueryError.canKeyWord, fullQuery);
+        return;
+        }
+        String[] splitQuery = query.split("\'");
+        if(splitQuery.length != 7){
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+        String groupName = splitQuery[1];
+        String fileName = splitQuery[3];
+        String permissionString = splitQuery[5];
+        fileName = "\"" + fileName + "\"";
+
+
+        Group group = getGroup(groupName);
+        if(group == null){
+          queryError(QueryError.noGroup, fullQuery);
+          return;
+        }
+        File file = getFile(fileName);
+        if(file == null){
+          queryError(QueryError.noFile, fullQuery);
+          return;
+        }
+        Permission permission;
+        try{
+          permission = Permission.valueOf(permissionString);
+        } catch(Exception e){
+          queryError(QueryError.noPermission, fullQuery);
+          return;
+        }
+        boolean hasAccess = group.hasFileAccess(file, permission);
+        if(hasAccess){
+          System.out.println(">> Yes");
+          System.out.println();
+        }
+        else{
+          System.out.println(">> No");
+          System.out.println();
+        }
+
+      }
+    else{
+      queryError(QueryError.canKeyWord, fullQuery);
+      return;
+    }
+  }
+
+  public static void processWhatQuery(String query){
+    String fullQuery = query;
+    //remove what and whitespace
+    query = query.substring(5, query.length());
+    char typeChar = query.charAt(0);
+    if(typeChar == 'f'){
+      if(query.contains("files can user")) processWhatFilesUser(fullQuery);
+      if(query.contains("files can group")) processWhatFilesGroup(fullQuery);
+    }
+    else if(typeChar == 'g'){
+      if(query.contains("groups is") && query.contains("a member of?")){
+        String[] variables = query.split("\'");
+        if(variables.length == 3){
+          String userName = variables[1];
+          User user = getUser(userName);
+          if(user == null){
+            queryError(QueryError.noUser, fullQuery);
+            return;
+          }
+          ArrayList<Group> groups = user.getGroups();
+          for(int i = 0; i < groups.size(); i++){
+            System.out.println(">> Group: " + groups.get(i).getName());
+          }
+          System.out.println();
+        } else{
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+      }
+      else if(query.contains("groups have access to file")){
+        String[] variables = query.split("\'");
+        if(variables.length != 5){
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+        String fileName = variables[1];
+        fileName = "\"" + fileName + "\"";
+        String permissionString = variables[3];
+        File file = getFile(fileName);
+        if(file == null){
+          queryError(QueryError.noFile, fullQuery);
+          return;
+        }
+        Permission permission = getPermission(permissionString);
+        if(permission == null){
+          queryError(QueryError.noPermission, fullQuery);
+          return;
+        }
+        file.printGroupAccess(permission);
+        System.out.println();
+
+      }
+    }
+    else if(typeChar == 'u'){
+      if(query.equals("users are trusted to alter permissions?")){
+        if(_trustedPermUsers.size() == 0) System.out.println(">> None");
+        for(int i = 0; i < _trustedPermUsers.size(); i++){
+          System.out.println(">> User: " +_trustedPermUsers.get(i).getName());
+        }
+        System.out.println();
+      } else if(query.contains("users have access to file")){
+        String[] variables = query.split("\'");
+        if(variables.length != 5){
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+        String fileName = variables[1];
+        fileName = "\"" + fileName + "\"";
+        String permissionString = variables[3];
+        File file = getFile(fileName);
+        if(file == null){
+          queryError(QueryError.noFile, fullQuery);
+          return;
+        }
+        Permission permission = getPermission(permissionString);
+        if(permission == null){
+          queryError(QueryError.noPermission, fullQuery);
+          return;
+        }
+        file.printUserAccess(permission);
+        System.out.println();
+      }
+    }
+    else if(typeChar == 's'){
+      if(query.contains("subgroups does group")){
+        String[] variables = query.split("\'");
+        if(variables.length != 3){
+          queryError(QueryError.variableNotQuoted, fullQuery);
+          return;
+        }
+        String groupName = variables[1];
+        Group group = getGroup(groupName);
+        if(group == null){
+          queryError(QueryError.noGroup, fullQuery);
+          return;
+        }
+        ArrayList<Group> children = group.getChildrenGroups();
+        if(children.size() == 0 ){
+          System.out.println(">> None");
+          System.out.println();
+        }
+        for(int i = 0; i < children.size(); i++){
+          System.out.println("Sub Group: " + children.get(i));
+        }
+        System.out.println();
+      }
+    }
+  }
+
+  public static void processWhatFilesUser(String query){
+    String[] variables = query.split("\'");
+    if(variables.length == 3){
+      String userName = variables[1];
+      User user = getUser(userName);
+      if(user == null) {
+        queryError(QueryError.noUser, query);
+        return;
+      }
+      user.printFileAccess();
+      System.out.println();
+    } else if(variables.length == 5){
+      String userName = variables[1];
+      String permissionString = variables[3];
+      User user = getUser(userName);
+      Permission permission = getPermission(permissionString);
+      if(user == null){
+        queryError(QueryError.noUser, query);
+        return;
+      }
+      if(permission == null){
+        queryError(QueryError.noPermission, query);
+        return;
+      }
+      user.printFileAccess(permission);
+      System.out.println();
+
+    } else{
+      queryError(QueryError.invalidForm, query);
+      return;
+    }
+  }
+
+  public static void processWhatFilesGroup(String query){
+    String[] variables = query.split("\'");
+    if(variables.length == 3){
+      String groupName = variables[1];
+      Group group = getGroup(groupName);
+      if(group == null) {
+        queryError(QueryError.noGroup, query);
+        return;
+      }
+      group.printFileAccess();
+      System.out.println();
+    } else if(variables.length == 5){
+      String groupName = variables[1];
+      String permissionString = variables[3];
+      Group group = getGroup(groupName);
+      Permission permission = getPermission(permissionString);
+      if(group == null){
+        queryError(QueryError.noUser, query);
+        return;
+      }
+      if(permission == null){
+        queryError(QueryError.noPermission, query);
+        return;
+      }
+      group.printFileAccess(permission);
+      System.out.println();
+
+    } else{
+      queryError(QueryError.invalidForm, query);
+      return;
+    }
+  }
+
+  public static void queryError(QueryError error, String query){
+    if(error == QueryError.invalidStart)
+      System.out.println("Queries must start with keyword 'IS', 'WHAT', or 'CAN'");
+    if(error == QueryError.canKeyWord){
+      System.out.println("There is no query of the form: " +query);
+      System.out.println("                                   ^"        );
+      System.out.println("Can must be followed by the keyword 'group' or 'user'");
+      System.out.println();
+    }
+    if(error == QueryError.variableNotQuoted){
+      System.out.println("All variables must be quoted in queries");
+      System.out.println();
+    }
+    if(error == QueryError.noUser){
+      System.out.println("There is no user with that name");
+      System.out.println();
+    }
+    if(error == QueryError.noGroup){
+      System.out.println("There is no group with that name");
+      System.out.println();
+    }
+    if(error == QueryError.noFile){
+      System.out.println("There is no file with that name");
+      System.out.println();
+    }
+    if(error == QueryError.noPermission){
+      System.out.println("There is no permission with that name");
+      System.out.println();
+    }
 
   }
 
@@ -483,15 +898,51 @@ public class AccessControl{
     for(int i = 0; i < fileLines.size(); i++){
       handleLine(fileLines.get(i));
     }
-    for(int i = 0; i < _groups.size(); i++){
-      _groups.get(i).print();
-    }
-    System.out.println();
-    for(int i = 0; i < _files.size(); i++){
-      _files.get(i).print();
-    }
 
+    // // --------- Prints the information of groups and files ----
+    // for(int i = 0; i < _groups.size(); i++){
+    //   _groups.get(i).print();
+    // }
+    // System.out.println();
+    // for(int i = 0; i < _files.size(); i++){
+    //   _files.get(i).print();
+    // }
 
+    Scanner sc = new Scanner(System.in);
+    boolean quit = false;
+    String query = "";
+    while(!quit){
+      System.out.println("Please enter a query (Enter 'help' to see query forms): ");
+      System.out.print("> ");
+      query = sc.nextLine();
+      if(query.toLowerCase().equals("quit")){
+        quit = true;
+      } else if(query.toLowerCase().equals("help")) {
+        System.out.println("_________________________________________________________________");
+        System.out.println("All variables in queries must be surrounded by '' ");
+        System.out.println("User Queries: ");
+        System.out.println("  Can user 'u' access file 'f' with privilege 'p'?");
+        System.out.println("  What files can user 'u' access?");
+        System.out.println("  What files can user 'u' access with privilege 'p'?");
+        System.out.println("  What groups is 'u' a member of?");
+        System.out.println("  What users are trusted to alter permissions?");
+        System.out.println("Group Queries: ");
+        System.out.println("  What users are in group 'g'?");
+        System.out.println("  Can group 'g' access file 'f' with privilege 'p'?");
+        System.out.println("  What files can group 'g' access?");
+        System.out.println("  What files can group 'g' access with privilege 'p'?");
+        System.out.println("  What subgroups does group 'g' have?");
+        System.out.println("  What are the parent groups of group 'g'?");
+        System.out.println("File Queries: ");
+        System.out.println("  What users have access to file 'f' with privilege 'p'?");
+        System.out.println("  What groups have access to file 'f' with privilege 'g'?");
+        System.out.println("_________________________________________________________________");
+      } else {
+        proccessQuery(query.toLowerCase());
+      }
+
+    }
   }
+
 
 }

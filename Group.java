@@ -51,8 +51,20 @@ class Group extends AccessObject{
       }
     }
 
+    public boolean hasFileAccess(File file, Permission permission){
+      return accessTree.hasFileAccess(file, permission);
+    }
+
     public AccessTree<Group> getAccessTree(){
       return this.accessTree;
+    }
+
+    public void printFileAccess(){
+      accessTree.printFileAccess();
+    }
+
+    public void printFileAccess(Permission permission){
+      accessTree.printFileAccess(permission);
     }
 
     public Node<Group> getRootOfTree(){

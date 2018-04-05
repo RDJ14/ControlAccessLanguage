@@ -22,7 +22,7 @@ Group("S-names", "Susan") :- ;
 
 SubGroup("Girls", "S-names") :- ;
 
-
+Perms(user, resource, op) :- PKD("Colette", key);
 Perms("Tim", "some/bull/shit", "read") :- ;
 Perms("Tim", "some/bull/shit", "write") :- ;
 Perms("Eric", "some/bull/shit", "read") :- ;

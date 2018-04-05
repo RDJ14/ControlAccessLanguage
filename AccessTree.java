@@ -98,6 +98,57 @@ class AccessTree<T>{
       newNode.addEdge(newEdge);
     }
 
+    public void printFileAccess(){
+      ArrayList<Node<? extends AccessObject>> accessNodes = root.getChildren();
+      for(int i = 0; i < accessNodes.size(); i++){
+        Node<? extends AccessObject> node = accessNodes.get(i);
+        System.out.println("File: " +node.getData().getName());
+        ArrayList<Edge> edges = node.getEdges();
+        for(int j = 0; j < edges.size(); j++){
+          System.out.println("  " + edges.get(j).getPermission());
+        }
+      }
+    }
+    public void printFileAccess(Permission permission){
+      ArrayList<Node<? extends AccessObject>> accessNodes = root.getChildren();
+      for(int i = 0; i < accessNodes.size(); i++){
+        Node<? extends AccessObject> node = accessNodes.get(i);
+        ArrayList<Edge> edges = node.getEdges();
+        for(int j = 0; j < edges.size(); j++){
+          if(edges.get(j).getPermission() == permission)
+            System.out.println("File: " +node.getData().getName());
+        }
+      }
+    }
+
+    public void printUserAccess(Permission permission){
+      ArrayList<Node<? extends AccessObject>> accessNodes = root.getChildren();
+      for(int i = 0; i < accessNodes.size(); i++){
+        Node<? extends AccessObject> node = accessNodes.get(i);
+        if(User.class.isAssignableFrom(node.getData().getClass())){
+            ArrayList<Edge> edges = node.getEdges();
+            for(int j = 0; j < edges.size(); j++){
+              if(edges.get(j).getPermission() == permission)
+                System.out.println("User: " +node.getData().getName());
+            }
+        }
+      }
+    }
+
+    public void printGroupAccess(Permission permission){
+      ArrayList<Node<? extends AccessObject>> accessNodes = root.getChildren();
+      for(int i = 0; i < accessNodes.size(); i++){
+        Node<? extends AccessObject> node = accessNodes.get(i);
+        if(Group.class.isAssignableFrom(node.getData().getClass())){
+            ArrayList<Edge> edges = node.getEdges();
+            for(int j = 0; j < edges.size(); j++){
+              if(edges.get(j).getPermission() == permission)
+                System.out.println("Group: " +node.getData().getName());
+            }
+        }
+      }
+    }
+
     public boolean hasFileAccess(File file, Permission permission){
       ArrayList<Node<? extends AccessObject>> accessNodes = root.getChildren();
       for(int i = 0; i < accessNodes.size(); i++){

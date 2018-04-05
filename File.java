@@ -23,6 +23,14 @@ class File extends AccessObject{
     this.accessTree.addGroupChild(group, permission);
   }
 
+  public void printUserAccess(Permission permission){
+    this.accessTree.printUserAccess(permission);
+  }
+
+  public void printGroupAccess(Permission permission){
+    this.accessTree.printGroupAccess(permission);
+  }
+
   public Node<File> getRootOfTree(){
     return (Node<File>) this.accessTree.getRoot();
   }

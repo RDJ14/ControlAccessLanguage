@@ -26,6 +26,14 @@ class User extends AccessObject{
     return accessTree.hasFileAccess(file, permission);
   }
 
+  public void printFileAccess(){
+    accessTree.printFileAccess();
+  }
+
+  public void printFileAccess(Permission permission){
+    accessTree.printFileAccess(permission);
+  }
+
   public ArrayList<Group> getGroups(){
     return this.groups;
   }
@@ -52,7 +60,7 @@ class User extends AccessObject{
     if (!User.class.isAssignableFrom(obj.getClass())) return false;
 
     final User other = (User) obj;
-    if((this.username == null) ? (other.username == null) : !this.username.equals(other.username)){
+    if((this.username == null) ? (other.username == null) : !this.username.toUpperCase().equals(other.username.toUpperCase())){
       return false;
     }
     if((this.key == null) ? (other.getKey() == null) : !this.key.equals(other.getKey())){
