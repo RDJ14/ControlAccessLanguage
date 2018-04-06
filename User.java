@@ -6,12 +6,14 @@ class User extends AccessObject{
   private String key;
   private ArrayList<Group> groups;
   private AccessTree<User> accessTree;
+  private ArrayList<String> attributes;
 
   public User(String username, String key){
     this.username = username;
     this.key = key;
     groups = new ArrayList<Group>();
     this.accessTree = new AccessTree<User>(this);
+    attributes = new ArrayList<String>();
   }
 
   public String getName(){
@@ -32,6 +34,23 @@ class User extends AccessObject{
 
   public void printFileAccess(Permission permission){
     accessTree.printFileAccess(permission);
+  }
+
+  public void addAttribute(String attr){
+    if(!attributes.contains(attr)) this.attributes.add(attr);
+  }
+
+  public ArrayList<String> getAttributes(){
+    return attributes;
+  }
+
+  public boolean hasAtrribute(String attr){
+    for(int i = 0; i < attributes.size(); i++){
+      if(attributes.get(i).toUpperCase().equals(attr.toUpperCase())){
+        return true;
+      }
+    }
+    return false;
   }
 
   public ArrayList<Group> getGroups(){

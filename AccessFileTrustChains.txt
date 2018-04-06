@@ -1,0 +1,143 @@
+PKD("Tim", "TimKey") :- ;
+PKD("Sally", "SallyKey") :- ;
+PKD("Eric", "EricKey") :- ;
+PKD("Colette", "ColetteKey") :- ;
+PKD("Sam", "SamKey") :- ;
+PKD("Dave", "DaveKey") :- ;
+PKD("Susan", "SusanKey") :- ;
+PKD("Steve", "SteveKey") :- ;
+PKD("Alex", "AlexKey") :- ;
+PKD("George", "GeorgeKey") :- ;
+PKD("Mike", "MikeKey") :- ;
+PKD("Carol", "CarolKey") :- ;
+PKD("Larry", "LarryKey") :- ;
+PKD("Steph", "StephKey") :- ;
+PKD("User1", "1") :- ;
+PKD("User2", "2") :- ;
+PKD("User3", "3") :- ;
+PKD("User4", "4") :- ;
+PKD("User5", "5") :- ;
+PKD("User6", "6") :- ;
+PKD("User7", "7") :- ;
+PKD("User8", "8") :- ;
+PKD("User9", "9") :- ;
+PKD("User10", "10") :- ;
+PKD("User11", "11") :- ;
+PKD("User12", "12") :- ;
+PKD("User13", "13") :- ;
+PKD("User14", "14") :- ;
+PKD("User15", "15") :- ;
+PKD("User16", "16") :- ;
+PKD("User17", "17") :- ;
+PKD("User18", "18") :- ;
+PKD("User19", "19") :- ;
+PKD("User20", "20") :- ;
+
+
+Attr("Colette", "Brown Hair") :- ;
+Attr("Larry", "Likes Pizza") :-;
+Attr("Steph", "Brown Hair") :- ;
+Attr("Alex", "Hates Pizza") :-;
+Attr("Larry", "Makes Pizza") :- ;
+Attr("Larry", "Owns Pizza Shop") :-;
+
+Attr("User2", "Even") :- ;
+Attr("User3", "Odd") :- ;
+Attr("User4", "Even") :- ;
+Attr("User5", "Odd") :- ;
+
+Group("Primes", "User2") :- ;
+Group("Primes", "User3") :- ;
+Group("Primes", "User5") :- ;
+Group("Primes", "User7") :- ;
+Group("Primes", "User11") :- ;
+Group("Primes", "User13") :- ;
+Group("Primes", "User17") :- ;
+Group("Primes", "User19") :- ;
+
+Group("SingleDigitPrimes", "User2") :- ;
+Group("SingleDigitPrimes", "User3") :- ;
+Group("SingleDigitPrimes", "User5") :- ;
+Group("SingleDigitPrimes", "User7") :- ;
+
+Group("SingleDigit", "User1") :- ;
+Group("SingleDigit", "User2") :- ;
+Group("SingleDigit", "User3") :- ;
+Group("SingleDigit", "User4") :- ;
+Group("SingleDigit", "User5") :- ;
+Group("SingleDigit", "User6") :- ;
+Group("SingleDigit", "User7") :- ;
+Group("SingleDigit", "User8") :- ;
+Group("SingleDigit", "User9") :- ;
+
+SubGroup("SingleDigit", "SingleDigitPrimes") :- ;
+
+Group("Boys", "Tim") :- ;
+Group("Boys", "Eric") :- ;
+Group("Boys", "Dave") :- ;
+Group("Boys", "Larry") :- ;
+Group("Boys", "Mike") :- ;
+Group("Boys", "Alex") :- ;
+Group("Boys", "George") :- ;
+
+Group("Girls", "Sally") :- ;
+Group("Girls", "Colette") :- ;
+Group("Girls", "Sam") :- ;
+Group("Girls", "Carol") :- ;
+Group("Girls", "Steph") :- ;
+Group("Girls", "Susan") :- ;
+
+Group("S-names", "Sally") :- ;
+Group("S-names", "Sam") :- ;
+Group("S-names", "Susan") :- ;
+Group("S-names", "Steph") :- ;
+
+SubGroup("Girls", "S-names") :- ;
+SubGroup("Primes", "SingleDigitPrimes") :- ;
+
+
+Perms(user, resource, op) :- PKD("Colette", key);
+Perms("Tim", "some/file", "read") :- ;
+Perms("Tim", "some/file", "write") :- ;
+Perms("Eric", "some/file", "read") :- ;
+Perms("Colette", "colette/file", "write") :- ;
+Perms("User1", "singledigit/file", "read") :- ;
+Perms(user, "singledigit/file", "write") :- Group("SingleDigitPrimes", user);
+
+Perms("User1", "singledigit/file", "read") :- PKD("User1", "1"), "User1"$Perms(user, "singledigit/file", "write");
+Perms("User2", "singledigit/file", "read") :- PKD("User1", "1"), "User1"$Perms(user, "singledigit/file", "read");
+Perms("User3", "singledigit/file", "read") :- PKD("User2", "2"), "User2"$Perms(user, "singledigit/file", "read");
+Perms("User4", "singledigit/file", "read") :- PKD("User3", "3"), "User3"$Perms(user, "singledigit/file", "read");
+Perms("User5", "singledigit/file", "read") :- PKD("User4", "4"), "User4"$Perms(user, "singledigit/file", "read");
+Perms("User6", "singledigit/file", "read") :- PKD("User5", "5"), "User5"$Perms(user, "singledigit/file", "read");
+Perms("User7", "singledigit/file", "read") :- PKD("User6", "6"), "User6"$Perms(user, "singledigit/file", "read");
+Perms("User8", "singledigit/file", "read") :- PKD("User7", "7"), "User7"$Perms(user, "singledigit/file", "read");
+Perms("User9", "singledigit/file", "read") :- PKD("User8", "8"), "User8"$Perms(user, "singledigit/file", "read");
+
+Perms(user, "prime/file", "write") :- Group("Primes", user);
+Perms("User3", "prime/file", "read") :- PKD("User2", "2"), "User2"$Perms(user, "prime/file", "write");
+Perms("User4", "prime/file", "read") :- PKD("User3", "3"), "User3"$Perms(user, "prime/file", "write");
+Perms("User5", "prime/file", "read") :- PKD("User4", "4"), "User4"$Perms(user, "prime/file", "write");
+Perms("User6", "prime/file", "read") :- PKD("User5", "5"), "User5"$Perms(user, "prime/file", "write");
+Perms("User7", "prime/file", "read") :- PKD("User6", "6"), "User6"$Perms(user, "prime/file", "write");
+Perms("User8", "prime/file", "read") :- PKD("User7", "7"), "User7"$Perms(user, "prime/file", "write");
+Perms("User9", "prime/file", "read") :- PKD("User8", "8"), "User8"$Perms(user, "prime/file", "write");
+Perms("User10", "prime/file", "read") :- PKD("User9", "9"), "User9"$Perms(user, "prime/file", "write");
+Perms("User11", "prime/file", "read") :- PKD("User10", "10"), "User10"$Perms(user, "prime/file", "write");
+Perms("User12", "prime/file", "read") :- PKD("User11", "11"), "User11"$Perms(user, "prime/file", "write");
+Perms("User14", "prime/file", "read") :- PKD("User12", "12"), "User12"$Perms(user, "prime/file", "write");
+Perms("User15", "prime/file", "read") :- PKD("User13", "13"), "User13"$Perms(user, "prime/file", "write");
+Perms("User16", "prime/file", "read") :- PKD("User14", "14"), "User14"$Perms(user, "prime/file", "write");
+
+Perms("Tim", "colette/file", "read") :- PKD("Colette", "ColetteKey"), "Colette"$Perms(user, "colette/file", "read");
+Perms("Sally", "colette/file", "read") :- PKD("Colette", "ColetteKey"), "Colette"$Perms(user, "colette/file", "write");
+Perms("Larry", "colette/file", "execute") :- PKD("Sally", "SallyKey"), "Sally"$Perms(user, "colette/file", "read");
+Perms("Eric", "some/file", "write") :- PKD("Larry", "LarryKey"), "Larry"$Perms(user, "colette/file", "execute");
+Perms("Dave", "some/file", "read") :- PKD("Eric", "EricKey"), "Eric"$Perms(user, "some/file", "write");
+Perms("Dave", "some/file", "read") :- PKD("Eric", "EricKey"), "Eric"$Perms(user, "some/file", "write");
+Perms("Dave", "some/file", "read") :- PKD("Eric", "EricKey"), "Eric"$Perms(user, "some/file", "write");
+Perms("Dave", "some/file", "read") :- PKD("Eric", "EricKey"), "Eric"$Perms(user, "some/file", "write");
+Perms("Dave", "some/file", "read") :- PKD("Eric", "EricKey"), "Eric"$Perms(user, "some/file", "write");
+Perms("Eric", "girl/file", "read") :- PKD("Colette", "ColetteKey"), "Colette"$Attr(user, "Brown Hair");
+Perms(user, "girl/file", "read") :- Group("Girls", user);
+Perms(user, "sname/file", "read") :- Group("S-names", user);

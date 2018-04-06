@@ -2,6 +2,7 @@ import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.io.*;
+import java.text.*;
 
 enum Permission{
   read,
@@ -26,6 +27,10 @@ public class AccessControl{
   static ArrayList<Group> _groups          = new ArrayList<Group>();
   static ArrayList<User> _trustedPermUsers = new ArrayList<User>();
   static User _keyDirectoryOwner           = null;
+
+  //For When testing is run
+  static ArrayList<String> _queries = new ArrayList<String>();
+
   public static void argumentError(String lineError, String policy, int expected, int actual){
     System.out.println("Error: " + lineError);
     System.out.println("Invalid number of arguments. There should be " + expected +" arguments for policy " + policy +", but there are: " + actual);
@@ -101,7 +106,8 @@ public class AccessControl{
     }
     catch (IOException e)
     {
-      e.printStackTrace();
+      System.out.println("Error: There is no file with the file name: " +fileName);
+      System.exit(1);
     }
     return lines;
   }
@@ -389,97 +395,127 @@ public class AccessControl{
             String rType1 = rhsParams1[0].replaceAll("\\s+","");  //PKD
             String rArguments1 = rhsParams1[1].replaceAll("\\s+",""); // user, key
 
-            //splitRightHand[1] should be key$perm(user, file, permission);
+            //splitRightHand[1] should be "username"$policy(Arguments);
             String[] rhsDollar = splitRightHand[1].split("\\$");
             String key = rhsDollar[0].replaceAll("\\s+","");
             String rhsPerm = rhsDollar[1].replaceAll("\\s+","");
 
             String[] rhsParams2 = rhsPerm.split("\\(");
-            String rType2 = rhsParams2[0].replaceAll("\\s+",""); //Perm
+            String rType2 = rhsParams2[0].replaceAll("\\s+",""); //Perm or Attr
             String rArguments2 = rhsParams2[1].replaceAll("\\s+",""); // user, file, permission
 
             String[] argSplitFirst = rArguments1.split(",");
             String[] argSplitSecond = rArguments2.split(",");
 
-            if(argSplitFirst.length != 2){
-              argumentError(line, "PKD", 2, argSplitFirst.length);
-            }
-            if(argSplitSecond.length != 3){
-              argumentError(line, "Perms", 3, argSplitSecond.length);
-            }
-            //        String userName = argSplit[0];
-            //        String fileName = argSplit[1];
-            //        String permissionString = argSplit[2];
             String trustedUsername       = argSplitFirst[0];
             String trustedKey            = argSplitFirst[1];
             if(trustedUsername.charAt(0) == '\"') trustedUsername = trustedUsername.substring(1, trustedUsername.length());
             if(trustedUsername.charAt(trustedUsername.length() - 1) == '\"') trustedUsername = trustedUsername.substring(0, trustedUsername.length() - 1);
 
-
             User trustedUser = null;
             User userToAdd = null;
             for(int i = 0; i < _users.size(); i++){
+              boolean sameName = _users.get(i).getName().equals(userName);
               if(trustedUsername.equals(_users.get(i).getName())){
                 trustedUser = _users.get(i);
-              } else if(userName.equals(_users.get(i).getName())){
+              }
+              if(sameName){
                 userToAdd = _users.get(i);
               }
             }
+            if(argSplitFirst.length != 2){
+              argumentError(line, "PKD", 2, argSplitFirst.length);
+            }
+
             if(trustedUser == null){
               invalidUserError(line, trustedUsername);
             }
             if(userToAdd == null){
               invalidUserError(line, userName);
             }
+            if(rType2.equals("Perms")){
+              if(argSplitSecond.length != 3){
+                argumentError(line, "Perms", 3, argSplitSecond.length);
+              }
+              String permUser = argSplitSecond[0];
+              String fileNameToCheck = argSplitSecond[1];
+              String permStringToCheck = argSplitSecond[2].replaceAll("\\s+","");
 
-            String permUser = argSplitSecond[0];
-            String fileNameToCheck = argSplitSecond[1];
-            String permStringToCheck = argSplitSecond[2].replaceAll("\\s+","");;
+              File fileToCheck = getFile(fileNameToCheck);
+              if(fileToCheck == null){
+                invalidFileError(line, fileNameToCheck);
+              }
+              Permission permToCheck = null;
+              if(permStringToCheck.charAt(0) == '"'){
+                permStringToCheck = permStringToCheck.substring(1, permStringToCheck.length() - 3);
+              }
 
-            File fileToCheck = getFile(fileNameToCheck);
-            if(fileToCheck == null){
-              invalidFileError(line, fileNameToCheck);
-            }
-            Permission permToCheck = null;
-            if(permStringToCheck.charAt(0) == '"'){
-              permStringToCheck = permStringToCheck.substring(1, permStringToCheck.length() - 3);
-            }
+              try{
+                permToCheck = Permission.valueOf(permStringToCheck);
+              } catch(Exception e){
+                invalidPermissionError(line, permStringToCheck);
+              }
+              if(trustedUser.hasFileAccess(fileToCheck, permToCheck)){
+                Permission permission = null;
+                if(permissionString.charAt(0) == '"'){
+                  permissionString = permissionString.substring(1, permissionString.length() - 1);
+                  try{
+                    permission = Permission.valueOf(permissionString);
+                  } catch(Exception e){
+                    invalidPermissionError(line, permissionString);
+                  }
+                } else{
+                  System.out.println("Error: " + line);
+                  System.out.println("When assigning a permission, the permission needs to be surrounded by \" \" ");
+                  System.exit(1);
+                }
+                int fileIndex = -1;
+                for(int i = 0; i < _files.size(); i++){
+                  if(_files.get(i).getName().equals(fileName)){
+                    fileIndex = i;
+                    break;
+                  }
+                }
+                File file;
+                if(fileIndex == -1){
+                  file = new File(fileName);
+                  _files.add(file);
+                } else{
+                  file = _files.get(fileIndex);
+                }
+                file.addUserAccess(userToAdd, permission);
+                userToAdd.addFileAccess(file, permission);
+              }
+            } else if(rType2.equals("Attr")){
+              if(argSplitSecond.length != 2){
+                argumentError(line, "Attr", 2, argSplitSecond.length);
+              }
+              String attrUser = argSplitSecond[0];
+              String attribute = argSplitSecond[1].replaceAll("\\s+","");
+              attribute = attribute.substring(0, attribute.length() - 2);
+              if(attrUser.charAt(0) == '\"') attrUser = attrUser.substring(1, attrUser.length());
+              if(attrUser.charAt(attrUser.length() - 1) == '\"') attrUser = attrUser.substring(0, attrUser.length() - 1);
 
-            try{
-              permToCheck = Permission.valueOf(permStringToCheck);
-            } catch(Exception e){
-              invalidPermissionError(line, permStringToCheck);
-            }
-            if(trustedUser.hasFileAccess(fileToCheck, permToCheck)){
-              Permission permission = null;
-              if(permissionString.charAt(0) == '"'){
-                permissionString = permissionString.substring(1, permissionString.length() - 1);
-                try{
-                  permission = Permission.valueOf(permissionString);
-                } catch(Exception e){
+              if(attribute.charAt(0) == '\"') attribute = attribute.substring(1, attribute.length());
+              if(attribute.charAt(attribute.length() - 1) == '\"') attribute = attribute.substring(0, attribute.length() - 1);
+
+              if(trustedUser.hasAtrribute(attribute)){
+                if(permissionString.charAt(0) == '"'){
+                  permissionString = permissionString.substring(1, permissionString.length() - 1);
+                }
+                Permission permission = getPermission(permissionString);
+                if(permission == null){
                   invalidPermissionError(line, permissionString);
                 }
-              } else{
-                System.out.println("Error: " + line);
-                System.out.println("When assigning a permission, the permission needs to be surrounded by \" \" ");
-                System.exit(1);
-              }
-              int fileIndex = -1;
-              for(int i = 0; i < _files.size(); i++){
-                if(_files.get(i).getName().equals(fileName)){
-                  fileIndex = i;
-                  break;
+                File file = getFile(fileName);
+                if(file == null){
+                  file = new File(fileName);
+                  _files.add(file);
                 }
+                file.addUserAccess(userToAdd, permission);
+                userToAdd.addFileAccess(file, permission);
               }
-              File file;
-              if(fileIndex == -1){
-                file = new File(fileName);
-                _files.add(file);
-              } else{
-                file = _files.get(fileIndex);
-              }
-              file.addUserAccess(userToAdd, permission);
-              userToAdd.addFileAccess(file, permission);
+
             }
           } else{
             System.out.println("Error: " +line);
@@ -538,9 +574,34 @@ public class AccessControl{
      childGroup.addParentGroup(parentGroup);
 
     }
+    else if(type.equals("Attr")){
+      String[] argSplit = arguments.split(",");
+      if(argSplit.length != 2){
+        argumentError(line, "Attr", 2, argSplit.length);
+      }
+      String userName = argSplit[0];
+      String attribute = argSplit[1];
+      if(userName.charAt(0) == '\"') userName = userName.substring(1, userName.length());
+      if(userName.charAt(userName.length() - 1) == '\"') userName = userName.substring(0, userName.length() - 1);
+
+      if(attribute.charAt(0) == '\"') attribute = attribute.substring(1, attribute.length());
+      if(attribute.charAt(attribute.length() - 1) == '\"') attribute = attribute.substring(0, attribute.length() - 1);
+
+      User user = getUser(userName);
+      if(user == null){
+        invalidUserError(line, userName);
+      }
+      user.addAttribute(attribute);
+    }
+    else{
+      System.out.println("Error: " +line);
+      System.out.println("No Policy function for " + type);
+      System.exit(1);
+    }
   }
 
   public static void proccessQuery(String query){
+    query = query.toLowerCase();
     char firstChar = query.charAt(0);
     switch(firstChar){
       case 'c':
@@ -780,7 +841,7 @@ public class AccessControl{
           System.out.println();
         }
         for(int i = 0; i < children.size(); i++){
-          System.out.println("Sub Group: " + children.get(i));
+          System.out.println("Sub Group: " + children.get(i).getName());
         }
         System.out.println();
       }
@@ -887,27 +948,28 @@ public class AccessControl{
 
   public static void main(String[] args) {
     String fileName = "";
-    if(args.length != 1){
+    if(args.length != 1 && args.length != 2){
       System.out.println("You must enter a policy file as an argument");
       System.exit(1);
     }
-    else{
+    if(args.length == 1) fileName = args[0];
+    else if(args.length == 2){
       fileName = args[0];
+      if(args[1].equals("--test")){
+        testProgram(fileName);
+      } else{
+        System.out.println("No valid parameter for file name" + args[2]);
+      }
     }
+    runProgram(fileName);
+
+  }
+
+  public static void runProgram(String fileName){
     List<String> fileLines = fileParser(fileName);
     for(int i = 0; i < fileLines.size(); i++){
       handleLine(fileLines.get(i));
     }
-
-    // // --------- Prints the information of groups and files ----
-    // for(int i = 0; i < _groups.size(); i++){
-    //   _groups.get(i).print();
-    // }
-    // System.out.println();
-    // for(int i = 0; i < _files.size(); i++){
-    //   _files.get(i).print();
-    // }
-
     Scanner sc = new Scanner(System.in);
     boolean quit = false;
     String query = "";
@@ -935,14 +997,102 @@ public class AccessControl{
         System.out.println("  What are the parent groups of group 'g'?");
         System.out.println("File Queries: ");
         System.out.println("  What users have access to file 'f' with privilege 'p'?");
-        System.out.println("  What groups have access to file 'f' with privilege 'g'?");
+        System.out.println("  What groups have access to file 'f' with privilege 'p'?");
         System.out.println("_________________________________________________________________");
-      } else {
+      }
+      else {
         proccessQuery(query.toLowerCase());
       }
-
     }
   }
 
+  public static void testProgram(String fileName){
 
+    double startTime = System.nanoTime();
+
+    List<String> fileLines = fileParser(fileName);
+    for(int i = 0; i < fileLines.size(); i++){
+      handleLine(fileLines.get(i));
+    }
+
+    double endTime = System.nanoTime();
+    double duration = (endTime - startTime);
+    double processTime = duration;
+    for(int i = 0; i < _users.size(); i++){
+      System.out.println("User: " +_users.get(i).getName());
+    }
+    double queryRuns = 100;
+    initializeQuery();
+    ArrayList<Double> times = new ArrayList<Double>();
+    for(int i = 0; i < queryRuns; i++){
+      String query = getNewQuery();
+      System.out.println(query);
+      startTime = System.nanoTime();
+      proccessQuery(query);
+      endTime = System.nanoTime();
+      duration = (endTime - startTime);
+      times.add(duration);
+    }
+    double averageTime = 0;
+    for(int i =0; i < times.size(); i++){
+      averageTime += times.get(i);
+    }
+    averageTime = (double) (averageTime/queryRuns);
+
+    averageTime = (double) (averageTime/(double)1000000);
+    processTime = (double) (processTime/1000000);
+    DecimalFormat df = new DecimalFormat("#.#####");
+
+    System.out.println("File Processed in: " +df.format(processTime) + " ms");
+    System.out.println(queryRuns + " queries ran with an average time of " +df.format(averageTime)+ " ms");
+    System.exit(1);
+  }
+
+  public static String getNewQuery(){
+    Random rand = new Random();
+    int index = rand.nextInt(_queries.size());
+    String query = _queries.get(index);
+    System.out.println("Starting query: " +query);
+    if(query.contains(" \'u\' ")){
+      index = rand.nextInt(_users.size());
+      String username = _users.get(index).getName();
+      username = "\'" + username + "\'";
+      query = query.replace("\'u\'", username);
+    }
+    if(query.contains("\'g\'")){
+      index = rand.nextInt(_groups.size());
+      String groupName = _groups.get(index).getName();
+      groupName = "\'" + groupName + "\'";
+      query = query.replace("\'g\'", groupName);
+    }
+    if(query.contains("\'f\'")){
+      index = rand.nextInt(_files.size());
+      String fileName = _files.get(index).getName();
+      fileName = fileName.substring(1, fileName.length() - 1);
+      fileName = "\'" + fileName + "\'";
+      query = query.replace("\'f\'", fileName);
+    }
+    if(query.contains("\'p\'")){
+      index = rand.nextInt(Permission.values().length);
+      String permission = Permission.values()[index].toString();
+      permission = "\'" + permission + "\'";
+      query = query.replace("\'p\'", permission);
+    }
+    return query;
+  }
+  public static void initializeQuery(){
+    _queries.add("Can user 'u' access file 'f' with privilege 'p'?");
+    _queries.add("What files can user 'u' access?");
+    _queries.add("What files can user 'u' access with privilege 'p'?");
+    _queries.add("What groups is 'u' a member of?");
+    _queries.add("What users are trusted to alter permissions?");
+    _queries.add("What users are in group 'g'?");
+    _queries.add("Can group 'g' access file 'f' with privilege 'p'?");
+    _queries.add("What files can group 'g' access?");
+    _queries.add("What files can group 'g' access with privilege 'p'?");
+    _queries.add("What subgroups does group 'g' have?");
+    _queries.add("What are the parent groups of group 'g'?");
+    _queries.add("What users have access to file 'f' with privilege 'p'?");
+    _queries.add("What groups have access to file 'f' with privilege 'p'?");
+  }
 }

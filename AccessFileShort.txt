@@ -1,0 +1,46 @@
+PKD("User1", "1") :- ;
+PKD("User2", "2") :- ;
+PKD("User3", "3") :- ;
+PKD("User4", "4") :- ;
+PKD("User5", "5") :- ;
+PKD("User6", "6") :- ;
+PKD("User7", "7") :- ;
+PKD("User8", "8") :- ;
+PKD("User9", "9") :- ;
+PKD("User10", "10") :- ;
+
+Group("SingleDigitPrimes", "User2") :- ;
+Group("SingleDigitPrimes", "User3") :- ;
+Group("SingleDigitPrimes", "User5") :- ;
+Group("SingleDigitPrimes", "User7") :- ;
+
+Group("SingleDigit", "User1") :- ;
+Group("SingleDigit", "User2") :- ;
+Group("SingleDigit", "User3") :- ;
+Group("SingleDigit", "User4") :- ;
+Group("SingleDigit", "User5") :- ;
+Group("SingleDigit", "User6") :- ;
+Group("SingleDigit", "User7") :- ;
+Group("SingleDigit", "User8") :- ;
+Group("SingleDigit", "User9") :- ;
+
+SubGroup("SingleDigit", "SingleDigitPrimes")
+
+Perms(user, "singledigit/file", "write") :- Group("SingleDigit", user);
+Perms(user, "prime/file", "write") :- Group("SingleDigitPrimes", user);
+Perms("User1", "1/file", "write") :- ;
+Perms("User2", "2/file", "write") :- ;
+Perms("User3", "3/file", "write") :- ;
+Perms("User4", "4/file", "write") :- ;
+Perms("User5", "5/file", "write") :- ;
+Perms("User6", "6/file", "write") :- ;
+
+Perms("User1", "prime/file", "read") :- PKD("User1", "1"), "User1"$Perms(user, "prime/file", "write");
+Perms("User2", "prime/file", "read") :- PKD("User2", "2"), "User2"$Perms(user, "prime/file", "write");
+Perms("User3", "prime/file", "read") :- PKD("User3", "3"), "User3"$Perms(user, "prime/file", "write");
+Perms("User4", "prime/file", "read") :- PKD("User4", "4"), "User4"$Perms(user, "prime/file", "write");
+Perms("User5", "prime/file", "read") :- PKD("User5", "5"), "User5"$Perms(user, "prime/file", "write");
+Perms("User6", "prime/file", "read") :- PKD("User6", "6"), "User6"$Perms(user, "prime/file", "write");
+Perms("User7", "prime/file", "read") :- PKD("User7", "7"), "User7"$Perms(user, "prime/file", "write");
+Perms("User8", "prime/file", "read") :- PKD("User8", "8"), "User8"$Perms(user, "prime/file", "write");
+Perms("User9", "prime/file", "read") :- PKD("User9", "9"), "User9"$Perms(user, "prime/file", "write");
